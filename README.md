@@ -1,4 +1,6 @@
-![FinMark Logo](docs/finmark-logo-full-bg.png)
+<p align="center">
+  <img src="docs/finmark-logo-full.png" alt="FinMark Logo" width="500"/>
+</p>
 
 # FinMark Platform Prototype
 
