@@ -1,4 +1,4 @@
-![FinMark Logo](client/public/assets/finmark-logo-full-bg.png)
+![FinMark Logo](docs/finmark-logo-full-bg.png)
 
 # FinMark Platform Prototype
 
