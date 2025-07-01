@@ -18,16 +18,23 @@ services:
     container_name: finmark-auth
     ports:
       - "5002:5002"
-    environment:
-      PORT: 5002
-      DB_HOST: db
-      DB_NAME: finmark_users
-      DB_USER: postgres
-      DB_PASS: chuman121001
-      JWT_SECRET: 481725203908d81ef0fedb8a84c1632293e249179b9b1308cc8b01976d757ebb
+    env_file:
+      - ./auth-service/.env
     depends_on:
       - db
     restart: on-failure
+
+  client:
+    build: ./client
+    container_name: finmark-client
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - auth-service
+    tty: true
+    stdin_open: true
 
 volumes:
   db-data:

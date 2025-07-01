@@ -1,5 +1,7 @@
 # Use Node.js LTS version
+
 FROM node:18
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 # Set working directory
 WORKDIR /app
@@ -12,7 +14,11 @@ RUN npm install
 COPY . .
 
 # Expose the port your service runs on
-EXPOSE 5000
+EXPOSE 5002
 
-# Start the service
-CMD ["node", "index.js"]
+# Add wait-for-it.sh script and use it to wait for db before starting
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
+# Wait for db before starting
+CMD ["/wait-for-it.sh", "db:5432", "--", "npm", "start"]
