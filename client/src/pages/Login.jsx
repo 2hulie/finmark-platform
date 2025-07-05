@@ -21,7 +21,16 @@ function Login() {
   const passwordInputRef = useRef(null);
 
   // Auto-fill email and show message after verification
+  // Handle Google OAuth redirect token and verified email login state
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      const user = JSON.parse(atob(token.split(".")[1]));
+      navigate(user.role === "admin" ? "/admin" : "/home");
+    }
+
     if (location.state && location.state.autoLogin && location.state.email) {
       setEmail(location.state.email);
       setError("Email verified! Please log in.");
@@ -119,6 +128,21 @@ function Login() {
             <button type="submit" style={styles.button}>
               Login
             </button>
+            <a
+              href="http://localhost:5002/api/auth/google"
+              style={{ textDecoration: "none" }}
+            >
+              <button
+                type="button"
+                style={{
+                  ...styles.button,
+                  backgroundColor: "#4285F4",
+                  marginTop: "0.5rem",
+                }}
+              >
+                Sign in with Google
+              </button>
+            </a>
             {error && (
               <>
                 <p style={styles.error}>{error}</p>

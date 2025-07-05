@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
+const passport = require("passport");
+const jwt = require("jsonwebtoken");
+
 // Resend verification email endpoint
 router.post("/resend-verification", async (req, res) => {
   try {
@@ -306,6 +309,19 @@ router.get("/2fa/status", validateToken, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to get 2FA status." });
   }
+});
+
+// Google OAuth routes
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// Callback from Google
+router.get("/google/callback", passport.authenticate("google", { session: false }), (req, res) => {
+  const token = jwt.sign({ id: req.user.id, email: req.user.email, role: req.user.role }, process.env.JWT_SECRET, {
+    expiresIn: "1h",
+  });
+
+  // You can send this back to the frontend via query string, cookie, etc.
+  res.redirect(`http://localhost:3000?token=${token}`);
 });
 
 module.exports = router;

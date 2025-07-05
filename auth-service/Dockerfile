@@ -21,4 +21,4 @@ COPY wait-for-it.sh /wait-for-it.sh
 RUN chmod +x /wait-for-it.sh
 
 # Wait for db before starting
-CMD ["/wait-for-it.sh", "db:5432", "--", "npm", "start"]
+CMD /wait-for-it.sh db:5432 -- npm start
