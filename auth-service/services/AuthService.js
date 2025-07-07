@@ -3,15 +3,18 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { sendMail } = require("../utils/email");
 const crypto = require("crypto");
+const AppError = require("../utils/appError");
 
 const register = async ({ name, email, password }) => {
   // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new Error("Please enter a valid email address.");
+    throw new AppError("Please enter a valid email address.", 400);
   }
   const existing = await User.findOne({ where: { email } });
-  if (existing) throw new Error("User already exists");
+  if (existing) {
+    throw new AppError("User already exists");
+  }
 
   const hashed = await bcrypt.hash(password, 10);
   // Generate email verification token
@@ -57,17 +60,17 @@ const login = async ({ email, password }) => {
   // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
-    throw new Error("Please enter a valid email address.");
+    throw new AppError("Please enter a valid email address.", 400);
   }
   const user = await User.findOne({ where: { email } });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new AppError("User not found", 404);
 
   if (!user.isEmailVerified) {
-    throw new Error("Please verify your email before logging in.");
+    throw new AppError("Please verify your email before logging in.", 401);
   }
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) throw new Error("Email and password do not match!");
+  if (!match) throw new AppError("Email and password do not match!", 401);
 
   // Check which 2FA methods are enabled
   const available2FAMethods = [];
@@ -98,16 +101,16 @@ const login = async ({ email, password }) => {
 
 const login2FA = async ({ email, code }) => {
   const user = await User.findOne({ where: { email } });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new AppError("User not found", 404);
   if (!user.is2FAAuthenticatorEnabled || !user.twoFASecret)
-    throw new Error("Authenticator 2FA not enabled");
+    throw new AppError("Authenticator 2FA not enabled", 403);
   const speakeasy = require("speakeasy");
   const verified = speakeasy.totp.verify({
     secret: user.twoFASecret,
     encoding: "base32",
     token: code,
   });
-  if (!verified) throw new Error("Invalid 2FA code");
+  if (!verified) throw new AppError("Invalid 2FA code", 401);
   const token = jwt.sign(
     { id: user.id, name: user.name, email: user.email, role: user.role },
     process.env.JWT_SECRET,
