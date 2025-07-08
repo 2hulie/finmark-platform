@@ -9,7 +9,7 @@ const {
 const register = async (req, res, next) => {
   try {
     const { name, email, password, confirmPassword } = req.body;
-    
+
     // Basic input validation
     if (!validateString(name, 50)) {
       return res.status(400).json({ message: "Name is required." });
@@ -20,14 +20,22 @@ const register = async (req, res, next) => {
     }
 
     if (!validatePassword(password)) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters, include upper and lower case letters, a number, and a special character.",
+      });
     }
 
     if (password !== confirmPassword) {
       return res.status(400).json({ message: "Passwords do not match." });
     }
 
-    const user = await AuthService.register({ name, email, password, confirmPassword });
+    const user = await AuthService.register({
+      name,
+      email,
+      password,
+      confirmPassword,
+    });
     res.status(201).json(user);
   } catch (err) {
     const status = err.statusCode || 500;
@@ -43,8 +51,9 @@ const login = async (req, res, next) => {
     if (!validateEmail(email)) {
       return res.status(400).json({ message: "Enter a valid email." });
     }
-    if (!validatePassword(password)) {
-      return res.status(400).json({ message: "Password must be at least 6 characters." });
+    // Only check for empty password, not full policy on login
+    if (typeof password !== "string" || password.length === 0) {
+      return res.status(400).json({ message: "Password is required." });
     }
 
     const result = await AuthService.login({ email, password });

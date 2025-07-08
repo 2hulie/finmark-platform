@@ -25,10 +25,31 @@ function Login() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get("token");
+    const twoFARequired = urlParams.get("twoFARequired");
+    const googleEmail = urlParams.get("email");
+    const available2FAMethods = urlParams.get("available2FAMethods");
+
     if (token) {
       localStorage.setItem("token", token);
       const user = JSON.parse(atob(token.split(".")[1]));
       navigate(user.role === "admin" ? "/admin" : "/home");
+      return;
+    }
+
+    // Handle Google OAuth 2FA-required redirect
+    if (twoFARequired === "true" && googleEmail && available2FAMethods) {
+      let methods = [];
+      try {
+        methods = JSON.parse(available2FAMethods);
+      } catch (e) {
+        // fallback: try splitting by comma if not valid JSON
+        methods = available2FAMethods.split(",");
+      }
+      setShow2FA({ availableMethods: methods });
+      setPendingEmail(googleEmail);
+      setEmail(googleEmail);
+      setError("");
+      return;
     }
 
     if (location.state && location.state.autoLogin && location.state.email) {
@@ -40,7 +61,7 @@ function Login() {
       }
     }
     // eslint-disable-next-line
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -118,14 +139,35 @@ function Login() {
               required
               style={styles.input}
             />
-            <PasswordInput
-              name="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              inputRef={passwordInputRef}
-            />
-            <button type="submit" style={styles.button}>
+            <div style={{ position: "relative", width: "100%" }}>
+              <PasswordInput
+                name="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                inputRef={passwordInputRef}
+              />
+              <Link
+                to="/forgot-password"
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  bottom: -32, // increased gap
+                  fontSize: "0.95rem",
+                  color: colors.secondary,
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontWeight: 500,
+                  marginBottom: 8, // extra spacing
+                }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
+            <button
+              type="submit"
+              style={{ ...styles.button, marginTop: "2rem" }}
+            >
               Login
             </button>
             <a
@@ -135,12 +177,44 @@ function Login() {
               <button
                 type="button"
                 style={{
-                  ...styles.button,
-                  backgroundColor: "#4285F4",
+                  background: "#fff",
+                  color: "#222",
+                  border: "1px solid #ddd",
+                  boxShadow: "0 2px 8px rgba(60,64,67,.08)",
+                  borderRadius: "0.5rem",
+                  padding: "0.85rem",
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 12,
+                  fontWeight: 500,
+                  fontSize: "1rem",
                   marginTop: "0.5rem",
+                  cursor: "pointer",
+                  transition: "box-shadow 0.2s",
                 }}
               >
-                Sign in with Google
+                <img
+                  src="/assets/google_logo.png"
+                  alt="Google logo"
+                  style={{
+                    width: 22,
+                    height: 22,
+                    display: "inline",
+                    verticalAlign: "middle",
+                  }}
+                />
+                <span
+                  style={{
+                    fontWeight: 500,
+                    fontSize: "1rem",
+                    color: "#222",
+                    letterSpacing: 0,
+                  }}
+                >
+                  Sign in with Google
+                </span>
               </button>
             </a>
             {error && (

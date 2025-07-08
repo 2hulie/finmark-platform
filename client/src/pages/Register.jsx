@@ -27,6 +27,15 @@ const Register = () => {
     e.preventDefault();
     setMessage("");
 
+    // Password policy check (frontend, matches backend)
+    const passwordPolicy =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+    if (!passwordPolicy.test(form.password)) {
+      setMessage(
+        "Password must be at least 8 characters, include upper and lower case letters, a number, and a special character."
+      );
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setMessage("Passwords do not match.");
       return;
@@ -37,6 +46,7 @@ const Register = () => {
         name: form.name,
         email: form.email,
         password: form.password,
+        confirmPassword: form.confirmPassword,
       });
       setShowVerifyMsg(true);
     } catch (err) {
