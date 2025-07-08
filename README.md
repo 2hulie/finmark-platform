@@ -105,4 +105,4 @@ npm start
 
 ## Documentation
 
-- See [`docs/Functional_Prototype_Documentation.md`](docs/Functional_Prototype_Documentation.md) for milestone details.
+- See [Functional Prototype Documentation](https://docs.google.com/document/d/1tb4CUsnRkukFFz_z99ygcE-825fRor5FHTRJUgtLtqA/edit?usp=sharing) for milestone details.
