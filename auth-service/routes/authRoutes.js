@@ -4,6 +4,80 @@ const crypto = require("crypto");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 
+// Forgot password: send reset link
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required." });
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // Don't reveal if user exists
+      return res.json({
+        success: true,
+        message:
+          "If an account exists for this email, a reset link has been sent.",
+      });
+    }
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+    await user.save();
+    const { sendMail } = require("../utils/email");
+    const resetUrl = `${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/reset-password?token=${token}`;
+    await sendMail({
+      to: user.email,
+      subject: "Reset your password",
+      text: `Click the following link to reset your password: ${resetUrl}`,
+      html: `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`,
+    });
+    res.json({
+      success: true,
+      message:
+        "If an account exists for this email, a reset link has been sent.",
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send reset link." });
+  }
+});
+
+// Reset password: set new password
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password)
+      return res.status(400).json({ message: "Missing token or password." });
+    const user = await User.findOne({ where: { resetPasswordToken: token } });
+    if (
+      !user ||
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token." });
+    }
+    // Validate password (reuse validator if available)
+    if (typeof password !== "string" || password.length < 8) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "Password must be at least 8 characters, include upper and lower case letters, a number, and a special character.",
+        });
+    }
+    const bcrypt = require("bcrypt");
+    user.password = await bcrypt.hash(password, 10);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+    res.json({ success: true, message: "Password reset successful!" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to reset password." });
+  }
+});
+
 // Resend verification email endpoint
 router.post("/resend-verification", async (req, res) => {
   try {
@@ -312,16 +386,44 @@ router.get("/2fa/status", validateToken, async (req, res) => {
 });
 
 // Google OAuth routes
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
 
 // Callback from Google
-router.get("/google/callback", passport.authenticate("google", { session: false }), (req, res) => {
-  const token = jwt.sign({ id: req.user.id, email: req.user.email, role: req.user.role }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
-
-  // You can send this back to the frontend via query string, cookie, etc.
-  res.redirect(`http://localhost:3000?token=${token}`);
-});
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false }),
+  async (req, res) => {
+    // Reload user from DB to ensure latest info
+    const User = require("../models/User");
+    const user = await User.findByPk(req.user.id);
+    // Check if 2FA is enabled
+    const available2FAMethods = [];
+    if (user.is2FAAuthenticatorEnabled && user.twoFASecret) {
+      available2FAMethods.push("authenticator");
+    }
+    if (user.is2FAEmailEnabled && user.isEmailVerified) {
+      available2FAMethods.push("email");
+    }
+    if (available2FAMethods.length > 0) {
+      // Redirect to frontend with 2FA required flag and available methods
+      const params = new URLSearchParams({
+        twoFARequired: "true",
+        email: user.email,
+        available2FAMethods: JSON.stringify(available2FAMethods),
+      });
+      return res.redirect(`http://localhost:3000?${params.toString()}`);
+    }
+    // No 2FA, issue JWT as usual
+    const token = jwt.sign(
+      { id: user.id, email: user.email, name: user.name, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    res.redirect(`http://localhost:3000?token=${token}`);
+  }
+);
 
 module.exports = router;

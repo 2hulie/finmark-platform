@@ -119,4 +119,5 @@ const login2FA = async ({ email, code }) => {
   return { token };
 };
 
+// Optionally, you could add forgotPassword and resetPassword logic here for more structure.
 module.exports = { register, login, login2FA };
