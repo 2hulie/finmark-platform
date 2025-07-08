@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PasswordInput from "../components/PasswordInput";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "../components/Logo";
@@ -50,21 +51,19 @@ function ResetPassword() {
         <div style={styles.divider} />
         <h2 style={styles.title}>Reset Password</h2>
         <form onSubmit={handleSubmit} style={styles.form}>
-          <input
-            type="password"
+          <PasswordInput
+            name="new-password"
             placeholder="New password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={styles.input}
           />
-          <input
-            type="password"
+          <PasswordInput
+            name="confirm-password"
             placeholder="Confirm new password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             required
-            style={styles.input}
           />
           <button type="submit" style={styles.button} disabled={loading}>
             {loading ? "Resetting..." : "Reset Password"}
