@@ -180,6 +180,18 @@ const TwoFALogin = ({ email, onSuccess, onCancel, availableMethods }) => {
       {(method === "authenticator" ||
         (method === "email" && emailCodeSent)) && (
         <>
+          {method === "authenticator" && (
+            <div
+              style={{
+                textAlign: "center",
+                color: "#2e7d32",
+                fontWeight: "bold",
+                marginBottom: "0.5rem",
+              }}
+            >
+              Using Authenticator App for 2FA
+            </div>
+          )}
           <label htmlFor="2fa-code">Enter 2FA Code</label>
           <input
             id="2fa-code"

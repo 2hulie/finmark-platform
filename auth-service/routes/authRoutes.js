@@ -3,6 +3,65 @@ const router = express.Router();
 const crypto = require("crypto");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
+const validateToken = require("../middleware/validateToken");
+
+// Admin: get all users
+router.get("/admin/users", validateToken, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    const users = await User.findAll({
+      attributes: ["id", "name", "email", "role", "isEmailVerified"],
+    });
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch users." });
+  }
+});
+
+// Admin: promote/demote user
+router.post("/admin/set-role", validateToken, async (req, res) => {
+  try {
+    const admin = await User.findByPk(req.user.id);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    const { userId, role } = req.body;
+    if (!userId || !role) {
+      return res.status(400).json({ message: "Missing userId or role." });
+    }
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    user.role = role;
+    await user.save();
+    res.json({ success: true, message: `User role set to ${role}.` });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to set user role." });
+  }
+});
+
+// Admin: delete user
+router.delete("/admin/delete/:id", validateToken, async (req, res) => {
+  try {
+    const admin = await User.findByPk(req.user.id);
+    if (!admin || admin.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    await user.destroy();
+    res.json({ success: true, message: "User deleted." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete user." });
+  }
+});
 
 // Forgot password: send reset link
 router.post("/forgot-password", async (req, res) => {
@@ -60,12 +119,10 @@ router.post("/reset-password", async (req, res) => {
     }
     // Validate password (reuse validator if available)
     if (typeof password !== "string" || password.length < 8) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "Password must be at least 8 characters, include upper and lower case letters, a number, and a special character.",
-        });
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters, include upper and lower case letters, a number, and a special character.",
+      });
     }
     const bcrypt = require("bcrypt");
     user.password = await bcrypt.hash(password, 10);
@@ -109,10 +166,8 @@ router.post("/resend-verification", async (req, res) => {
   }
 });
 const { register, login, login2FA } = require("../controllers/AuthController");
-const validateToken = require("../middleware/validateToken");
 const speakeasy = require("speakeasy");
 const QRCode = require("qrcode");
-const User = require("../models/User");
 
 // 2FA via email: send code (for login, public, takes email in body)
 // Updated: 2FA via email: send code (for login, public, takes email in body)

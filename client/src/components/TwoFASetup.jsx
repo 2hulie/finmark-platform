@@ -380,26 +380,33 @@ const TwoFASetup = ({ token }) => {
           >
             Verify 2FA
           </button>
-          {message && (
-            <div
-              style={{
-                marginTop: "1rem",
-                background: "#fff3f3",
-                border: "1px solid #c00",
-                color: message.includes("enabled") ? "#2e7d32" : "#c00",
-                padding: "0.75rem 1rem",
-                borderRadius: "0.5rem",
-                fontWeight: "bold",
-                fontSize: "1rem",
-                textAlign: "center",
-                minHeight: 32,
-              }}
-              role="alert"
-              aria-live="assertive"
-            >
-              {message}
-            </div>
-          )}
+          {message &&
+            (() => {
+              const isSuccess =
+                message.toLowerCase().includes("enabled") ||
+                message.toLowerCase().includes("sent") ||
+                message.toLowerCase().includes("success");
+              return (
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    background: isSuccess ? "#e8f5e9" : "#fff3f3",
+                    border: isSuccess ? "1px solid #2e7d32" : "1px solid #c00",
+                    color: isSuccess ? "#2e7d32" : "#c00",
+                    padding: "0.75rem 1rem",
+                    borderRadius: "0.5rem",
+                    fontWeight: "bold",
+                    fontSize: "1rem",
+                    textAlign: "center",
+                    minHeight: 32,
+                  }}
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  {message}
+                </div>
+              );
+            })()}
         </div>
       )}
       {/* Email 2FA Flow */}
@@ -454,26 +461,33 @@ const TwoFASetup = ({ token }) => {
           >
             {resendTimer > 0 ? `Resend (${resendTimer})` : "Resend Code"}
           </button>
-          {message && (
-            <div
-              style={{
-                marginTop: "1rem",
-                background: "#fff3f3",
-                border: "1px solid #c00",
-                color: message.includes("enabled") ? "#2e7d32" : "#c00",
-                padding: "0.75rem 1rem",
-                borderRadius: "0.5rem",
-                fontWeight: "bold",
-                fontSize: "1rem",
-                textAlign: "center",
-                minHeight: 32,
-              }}
-              role="alert"
-              aria-live="assertive"
-            >
-              {message}
-            </div>
-          )}
+          {message &&
+            (() => {
+              const isSuccess =
+                message.toLowerCase().includes("enabled") ||
+                message.toLowerCase().includes("sent") ||
+                message.toLowerCase().includes("success");
+              return (
+                <div
+                  style={{
+                    marginTop: "1rem",
+                    background: isSuccess ? "#e8f5e9" : "#fff3f3",
+                    border: isSuccess ? "1px solid #2e7d32" : "1px solid #c00",
+                    color: isSuccess ? "#2e7d32" : "#c00",
+                    padding: "0.75rem 1rem",
+                    borderRadius: "0.5rem",
+                    fontWeight: "bold",
+                    fontSize: "1rem",
+                    textAlign: "center",
+                    minHeight: 32,
+                  }}
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  {message}
+                </div>
+              );
+            })()}
         </div>
       )}
     </div>

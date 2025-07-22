@@ -89,7 +89,7 @@ function Login() {
       localStorage.setItem("token", token);
       const user = JSON.parse(atob(token.split(".")[1]));
       alert("Login successful!");
-      navigate(user.role === "admin" ? "/admin" : "/home");
+      navigate(user.role === "admin" ? "/admin" : "/");
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
       setResendStatus("");
