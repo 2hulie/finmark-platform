@@ -62,7 +62,7 @@ finmark/
 
 ```sh
 git clone https://github.com/2hulie/finmark-platform.git
-cd finmark
+cd finmark-platform
 ```
 
 ### 2. Environment Variables
